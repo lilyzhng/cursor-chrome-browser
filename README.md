@@ -66,6 +66,21 @@ Playwright MCP server and confirms the model can navigate, snapshot, and read li
 This isolates the "does the model + browser tooling work" question from the one manual step
 (connecting your real tab) that only you can do in the GUI.
 
+#### Validated output (2026-06-14)
+
+```
+==> Driving example.com with composer-2.5 (headless)
+----- composer-2.5 output -----
+Main <h1> heading: Example Domain
+First sentence of the paragraph: This domain is for use in documentation
+examples without needing permission.
+-------------------------------
+PASS: composer-2.5 drove the headless browser and read live page content.
+```
+
+Both strings match `curl https://example.com` verbatim — composer-2.5 actually read the live
+page through the browser tools, it didn't make them up.
+
 ## How this compares
 
 | Approach | Drives your real logins? | Weight | Notes |
@@ -78,6 +93,19 @@ This isolates the "does the model + browser tooling work" question from the one 
 
 See [`docs/research.md`](./docs/research.md) for the full cross-validated research, sources, and why
 each alternative was rejected.
+
+## Troubleshooting
+
+- **`playwright` server not loaded in `cursor-agent`** → it needs approval once:
+  `cursor-agent mcp enable playwright`, then `cursor-agent mcp list` should show `ready`.
+- **Bridge extension never prompts / tab won't connect** → make sure the `--extension` arg is
+  present and you restarted Cursor after editing `mcp.json`. Extension mode only works with
+  Chrome/Edge.
+- **Don't try the old `--remote-debugging-port` + your default Chrome profile trick.** Since
+  Chrome 136 (Apr 2025) Chrome silently ignores `--remote-debugging-port` on the default profile
+  (anti-infostealer change), so the naive CDP path fails silently. Extension mode avoids it.
+- **First run is slow** → `npx @playwright/mcp@latest` downloads on first use; subsequent runs
+  are fast.
 
 ## Requirements
 
