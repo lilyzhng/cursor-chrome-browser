@@ -11,7 +11,8 @@ reproduce it, and the result. Layered from "no browser needed" up to "real Chrom
 | 2 | Transport round-trip (`npm run smoke:transport`) | No (fake extension) | No | ✅ PASS |
 | 3 | CLI live harness (`npm run smoke:live`) | Yes (CLI launch) | No | ⚠️ Blocked by Chrome policy (not a code bug) |
 | 4 | Real extension ↔ server handshake | Yes (manual load) | No | ✅ PASS (observed live) |
-| 5 | Full end-to-end in Composer 2.5 | Yes | Yes | ✅ PASS (out of the box) |
+| 5 | Full end-to-end in Composer 2.5 (read) | Yes | Yes | ✅ PASS (out of the box) |
+| 6 | Write action on a logged-in site (Twitter reply) | Yes | Yes | 🔜 Planned (not yet run) |
 
 ---
 
@@ -84,11 +85,29 @@ operate a real page.
 
 **Result:** ✅ PASS — worked out of the box, fast, on first real run.
 
+## 6. Write action on a logged-in site — Twitter reply (planned)
+
+**Verifies:** read **and write** on a real logged-in third-party site — the strongest proof that
+Composer 2.5 matches Claude-in-Chrome. Composer opens your logged-in Twitter/X, reads a target
+user's latest post, and types a reply.
+
+**Human-in-the-loop:** posting is a public action as you. By design, Composer **types the comment
+but stops before clicking "Post"** so you confirm before anything goes public.
+
+**Prompt (model = Composer 2.5):**
+> Using the cursor-chrome-browser tools:
+> 1. tabs_context_mcp (createIfEmpty: true) to open a new tab
+> 2. navigate to https://x.com/<handle>
+> 3. read_page / get_page_text to find their latest original post, and read me the full text
+> 4. type a comment into the reply box under that post: "<comment text>"
+> 5. Do NOT click Post — take a screenshot and show me to confirm; I'll tell you when to send
+
+**Result:** 🔜 Not yet run. Fill in once executed (which tools fired, whether the reply box was
+found and typed into, screenshot before posting).
+
 ---
 
 ## Not yet tested / next
 
-- **Write actions on a logged-in site** (e.g. open Twitter/X, read a post, type a reply). Recommend
-  composing the reply but stopping before the final "Post" so a human confirms public actions.
 - **Multi-session** (two Cursor clients at once) — v1 is single-session; the WebSocket port is fixed.
 - **WebSocket auth** — v1 binds to localhost with no token; see `docs/design.md` Risks/phase-2.
