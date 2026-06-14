@@ -1,0 +1,94 @@
+# Testing log — Cursor Chrome Browser
+
+Record of the test scenarios run while building the product, what each one verifies, how to
+reproduce it, and the result. Layered from "no browser needed" up to "real Chrome, real Composer."
+
+## Summary
+
+| # | Scenario | Needs Chrome? | Needs Composer? | Result |
+|---|---|---|---|---|
+| 1 | Server tool-listing (`npm run smoke`) | No | No | ✅ PASS |
+| 2 | Transport round-trip (`npm run smoke:transport`) | No (fake extension) | No | ✅ PASS |
+| 3 | CLI live harness (`npm run smoke:live`) | Yes (CLI launch) | No | ⚠️ Blocked by Chrome policy (not a code bug) |
+| 4 | Real extension ↔ server handshake | Yes (manual load) | No | ✅ PASS (observed live) |
+| 5 | Full end-to-end in Composer 2.5 | Yes | Yes | ✅ PASS (out of the box) |
+
+---
+
+## 1. Server tool-listing — `npm run smoke`
+
+**Verifies:** the MCP server starts over stdio (the way Cursor launches it) and exposes all 18
+browser tools. Pure server check — no browser, no WebSocket peer.
+
+**How:** `cd server && npm run smoke` (uses a throwaway port `19335`).
+
+**Result:** ✅ PASS — 18 tools listed: `tabs_context_mcp, tabs_create_mcp, navigate, computer,
+find, form_input, get_page_text, gif_creator, javascript_tool, read_console_messages,
+read_network_requests, read_page, resize_window, shortcuts_list, shortcuts_execute,
+switch_browser, update_plan, upload_image`.
+
+## 2. Transport round-trip — `npm run smoke:transport`
+
+**Verifies:** the transport we rewrote (native messaging + TCP → a single WebSocket). A **fake
+extension** (a plain WebSocket client) connects and echoes a canned result, proving a tool call
+routes the whole path: `MCP client → server (stdio) → sendToExtension → WebSocket → extension →
+WebSocket → server → MCP client`.
+
+**How:** `cd server && npm run smoke:transport` (throwaway port `19337`).
+
+**Result:** ✅ PASS — `tabs_create_mcp` call round-tripped and returned the fake extension's
+response (`FAKE_EXTENSION_OK: tabs_create_mcp`).
+
+## 3. CLI live harness — `npm run smoke:live`
+
+**Verifies (intended):** launch a real Chrome with the unpacked extension on a throwaway profile,
+then drive `example.com` through the **real** extension (connect → CDP attach → navigate →
+get_page_text).
+
+**How:** `cd server && npm run smoke:live`.
+
+**Result:** ⚠️ Blocked — **not a code bug**. Recent Chrome ignores/blocks `--load-extension`
+(anti-malware policy), so the extension never loads via the command line and the harness reports
+"extension never connected." The harness is kept for environments where command-line extension
+loading is permitted; in practice, load the extension manually (scenario 4) instead.
+
+## 4. Real extension ↔ server handshake (manual load) — 2026-06-14
+
+**Verifies:** the **actual** extension, loaded in real Chrome, connects to the server over the
+WebSocket.
+
+**Steps performed:**
+1. `chrome://extensions` → Developer mode → **Load unpacked** → selected `extension/`. Extension
+   loaded; its `background.js` service worker started.
+2. With no server running, the extension logged
+   `WebSocket connection to 'ws://127.0.0.1:9335/' failed: net::ERR_CONNECTION_REFUSED` and kept
+   retrying — i.e. the reconnect loop works as designed (the error simply means "server not up
+   yet").
+3. Started the server; server log printed **`Cursor Chrome Browser extension connected.`** within
+   ~seconds.
+
+**Result:** ✅ PASS — real extension ↔ real server WebSocket handshake confirmed live.
+
+## 5. Full end-to-end in Composer 2.5 — 2026-06-14
+
+**Verifies:** the whole product from Cursor's UI: Composer 2.5 driving the real extension to
+operate a real page.
+
+**Steps performed:**
+1. Cursor Settings → MCP shows `cursor-chrome-browser` **green, 18 tools enabled**; Cursor spawned
+   the server on port 9335 (confirmed via `lsof`).
+2. In Composer (model = Composer 2.5), one prompt asked it to get tab context, navigate, and read
+   a page. Composer autonomously ran `tabs_context_mcp(createIfEmpty: true)` → `navigate` →
+   `get_page_text`, created the blue **MCP** tab group, opened the Decagon blog post
+   ("Why off-policy training isn't enough…"), and returned the title + first sentence verbatim.
+
+**Result:** ✅ PASS — worked out of the box, fast, on first real run.
+
+---
+
+## Not yet tested / next
+
+- **Write actions on a logged-in site** (e.g. open Twitter/X, read a post, type a reply). Recommend
+  composing the reply but stopping before the final "Post" so a human confirms public actions.
+- **Multi-session** (two Cursor clients at once) — v1 is single-session; the WebSocket port is fixed.
+- **WebSocket auth** — v1 binds to localhost with no token; see `docs/design.md` Risks/phase-2.
