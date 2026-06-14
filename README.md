@@ -1,114 +1,96 @@
-# cursor-chrome-browser
+# Cursor Chrome Browser
 
-**Give Cursor's Composer 2.5 the same "drive my real, logged-in browser" power that Claude-in-Chrome has — no extra API key, billed to your Cursor subscription.**
+**Let Cursor's Composer drive your real, logged-in Chrome — one product, installed once.**
 
 Everyone assumes only Claude can reach into your browser and operate the sites you're already
-logged into. It's not a model capability gap. Composer 2.5 is natively multimodal and, in our
-own testing, browses *better* than Sonnet 4.6. The only thing missing in the Cursor ecosystem is
-the product wiring. This repo is that wiring: a ~10-line MCP config that points Composer at the
-[Playwright MCP](https://github.com/microsoft/playwright-mcp) server in `--extension` mode, so the
-agent drives **your actual Chrome with your actual logins**.
+logged into. It's not a model gap: Composer 2.5 is natively multimodal and, in our testing, browses
+*better* than Sonnet 4.6. The Cursor ecosystem just lacked the product wiring. This is that product
+— a Chrome extension plus a small MCP server, talking over a single WebSocket, that gives Composer
+the same "operate my actual browser" power Claude-in-Chrome has. Billed to your Cursor subscription,
+no extra model API key.
 
-## What you get
+## How it works
 
-- Composer opens and operates **any** website, not just Cursor's internal preview browser.
-- It reuses the sessions you're **already logged into** — no re-login, no password prompts.
-- **No separate model API key.** The browser tools are driven by the Composer model you already
-  pay for; the MCP server is just a tool surface with no LLM of its own.
-- One-click connect (same UX as Claude-in-Chrome's authorize step).
+Two components, one product:
 
-## Quickstart
+```
+Cursor (Composer)  ⇄ stdio MCP ⇄  server/  ⇄ WebSocket ⇄  extension/  ⇄ CDP ⇄  your Chrome
+```
 
-### 1. Add the MCP server
+- **`extension/`** — a Manifest V3 Chrome extension that drives tabs via the Chrome DevTools
+  Protocol (click, type, screenshot, scroll, read the accessibility tree, run JS, read
+  console/network). It connects to the server as a WebSocket client.
+- **`server/`** — an MCP server Cursor launches via `~/.cursor/mcp.json`. It exposes 18 browser
+  tools to Composer and runs a localhost WebSocket server the extension connects to.
 
-Copy [`mcp.json`](./mcp.json) into `~/.cursor/mcp.json` (global) or your project's
-`.cursor/mcp.json`:
+No native-messaging host, no `install.sh`, no extension-ID juggling — see [`docs/design.md`](./docs/design.md)
+for the architecture and why it's two hops instead of three.
+
+## Install
+
+### 1. Server
+
+```bash
+cd server
+npm install
+```
+
+### 2. Extension
+
+1. Open `chrome://extensions`, enable **Developer mode**.
+2. **Load unpacked** → select the `extension/` directory.
+
+(Chrome Web Store distribution is planned; for now it's an unpacked dev load.)
+
+### 3. Point Cursor at the server
+
+Add to `~/.cursor/mcp.json` (use the **absolute** path to this repo):
 
 ```json
 {
   "mcpServers": {
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--extension"]
+    "cursor-chrome-browser": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/cursor-chrome-browser/server/mcp-server.js"]
     }
   }
 }
 ```
 
-### 2. Install the Playwright MCP Bridge extension
-
-Restart Cursor. When the `playwright` server starts in `--extension` mode it prompts you to install
-the **Playwright MCP Bridge** Chrome/Edge extension. Install it once.
-
-### 3. Connect a logged-in tab (the one click)
-
-Open a site you're already logged into, then click the bridge extension to connect that tab. From
-here Composer drives your real browser with your real session. This is the exact analog of
-Claude-in-Chrome's authorize-once step.
+Restart Cursor; `cursor-chrome-browser` should show up under Settings → MCP.
 
 ### 4. Drive it
 
-In Composer, ask it to do something on that site — e.g. *"read my latest 3 Linear tickets and
-summarize them"* — and watch it operate the logged-in page without asking you to sign in again.
+In Composer, ask it to do something on a site you're logged into (e.g. *"open my Linear and
+summarize my latest 3 tickets"*). On first use you pick which tab to hand over; from there Composer
+operates your real, logged-in browser.
 
-## Verify it works (no GUI, no login needed)
+## The 18 tools
 
-`scripts/validate.sh` proves the toolchain + Composer 2.5 end-to-end **headlessly**, using a
-throwaway browser profile and the public `example.com` (so it needs no login and won't touch your
-real accounts):
+Tab/context: `tabs_context_mcp`, `tabs_create_mcp`, `switch_browser`. Navigation: `navigate`.
+Interaction: `computer` (click/type/screenshot/scroll/key/drag/hover/zoom), `find`, `form_input`,
+`upload_image`. Reading: `read_page`, `get_page_text`, `read_console_messages`,
+`read_network_requests`. Utility: `javascript_tool`, `gif_creator`, `resize_window`,
+`shortcuts_list`, `shortcuts_execute`, `update_plan`.
+
+## Verify the server
 
 ```bash
-./scripts/validate.sh
+cd server && npm run smoke
 ```
 
-It runs `cursor-agent` with `--model composer-2.5` against a default (non-extension, headless)
-Playwright MCP server and confirms the model can navigate, snapshot, and read live page content.
-This isolates the "does the model + browser tooling work" question from the one manual step
-(connecting your real tab) that only you can do in the GUI.
+Launches the MCP server over stdio (as Cursor would) and confirms all 18 tools are exposed. No
+browser needed.
 
-#### Validated output (2026-06-14)
+## Credits
 
-```
-==> Driving example.com with composer-2.5 (headless)
------ composer-2.5 output -----
-Main <h1> heading: Example Domain
-First sentence of the paragraph: This domain is for use in documentation
-examples without needing permission.
--------------------------------
-PASS: composer-2.5 drove the headless browser and read live page content.
-```
+The CDP tool implementations (the `computer`/`read_page`/`find` logic and tool schemas) are
+borrowed from [`noemica-io/open-claude-in-chrome`](https://github.com/noemica-io/open-claude-in-chrome)
+(MIT), a clean-room clone of Claude-in-Chrome's 18 tools. We redesigned the transport (native
+messaging + TCP → a single WebSocket), retargeted it from Claude Code to Cursor, and packaged it as
+one product. See [`docs/design.md`](./docs/design.md).
 
-Both strings match `curl https://example.com` verbatim — composer-2.5 actually read the live
-page through the browser tools, it didn't make them up.
+## Status
 
-## How this compares
-
-| Approach | Drives your real logins? | Weight | Notes |
-|---|---|---|---|
-| **Playwright MCP `--extension`** (this repo) | **Yes** — your real Chrome, one-click connect | Light (just an MCP server) | Best fit for "Composer operates logged-in sites" |
-| Playwright MCP default profile | No — separate browser, log in again | Light | Simpler but a weaker story |
-| Chrome DevTools MCP | Via CDP | Light | Google-official; strong for debug/perf, weak for general browsing |
-| [browser-use](https://github.com/browser-use/browser-use) | Yes | **Heavy** | Full agent framework with its own LLM loop — wrong tool for augmenting Composer |
-| CDP `--cdp-endpoint` | Was the obvious idea | Light | **Dropped:** Chrome 136+ silently ignores `--remote-debugging-port` on the default profile |
-
-See [`docs/research.md`](./docs/research.md) for the full cross-validated research, sources, and why
-each alternative was rejected.
-
-## Troubleshooting
-
-- **`playwright` server not loaded in `cursor-agent`** → it needs approval once:
-  `cursor-agent mcp enable playwright`, then `cursor-agent mcp list` should show `ready`.
-- **Bridge extension never prompts / tab won't connect** → make sure the `--extension` arg is
-  present and you restarted Cursor after editing `mcp.json`. Extension mode only works with
-  Chrome/Edge.
-- **Don't try the old `--remote-debugging-port` + your default Chrome profile trick.** Since
-  Chrome 136 (Apr 2025) Chrome silently ignores `--remote-debugging-port` on the default profile
-  (anti-infostealer change), so the naive CDP path fails silently. Extension mode avoids it.
-- **First run is slow** → `npx @playwright/mcp@latest` downloads on first use; subsequent runs
-  are fast.
-
-## Requirements
-
-- macOS (the validation script and bridge flow are tested on macOS).
-- Cursor with Composer 2.5, plus the `cursor-agent` CLI for the headless validation step.
-- Node / `npx` (the Playwright MCP server runs via `npx @playwright/mcp@latest`).
+v1 — single Cursor session, unauthenticated localhost WebSocket, unpacked extension with
+placeholder icons. See the Risks/phase-2 section of [`docs/design.md`](./docs/design.md).

@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--extension"]
+    "cursor-chrome-browser": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/cursor-chrome-browser/server/mcp-server.js"]
     }
   }
 }

@@ -1,0 +1,18 @@
+{
+  "name": "cursor-chrome-browser-server",
+  "version": "0.1.0",
+  "description": "MCP server for Cursor Chrome Browser — exposes browser-automation tools to Cursor's Composer and bridges to the Chrome extension over WebSocket.",
+  "type": "module",
+  "bin": {
+    "cursor-chrome-browser-server": "mcp-server.js"
+  },
+  "scripts": {
+    "start": "node mcp-server.js",
+    "smoke": "node smoke-test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ws": "^8.18.0",
+    "zod": "^3.23.0"
+  }
+}
