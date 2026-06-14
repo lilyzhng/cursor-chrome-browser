@@ -12,7 +12,7 @@ reproduce it, and the result. Layered from "no browser needed" up to "real Chrom
 | 3 | CLI live harness (`npm run smoke:live`) | Yes (CLI launch) | No | ⚠️ Blocked by Chrome policy (not a code bug) |
 | 4 | Real extension ↔ server handshake | Yes (manual load) | No | ✅ PASS (observed live) |
 | 5 | Full end-to-end in Composer 2.5 (read) | Yes | Yes | ✅ PASS (out of the box) |
-| 6 | Write action on a logged-in site (Twitter reply) | Yes | Yes | 🔜 Planned (not yet run) |
+| 6 | Write action on a logged-in site (Twitter reply) | Yes | Yes | ✅ PASS (stopped before Post) |
 
 ---
 
@@ -85,7 +85,7 @@ operate a real page.
 
 **Result:** ✅ PASS — worked out of the box, fast, on first real run.
 
-## 6. Write action on a logged-in site — Twitter reply (planned)
+## 6. Write action on a logged-in site — Twitter reply — 2026-06-14
 
 **Verifies:** read **and write** on a real logged-in third-party site — the strongest proof that
 Composer 2.5 matches Claude-in-Chrome. Composer opens your logged-in Twitter/X, reads a target
@@ -97,13 +97,19 @@ but stops before clicking "Post"** so you confirm before anything goes public.
 **Prompt (model = Composer 2.5):**
 > Using the cursor-chrome-browser tools:
 > 1. tabs_context_mcp (createIfEmpty: true) to open a new tab
-> 2. navigate to https://x.com/<handle>
+> 2. navigate to https://x.com/srush_nlp
 > 3. read_page / get_page_text to find their latest original post, and read me the full text
 > 4. type a comment into the reply box under that post: "<comment text>"
 > 5. Do NOT click Post — take a screenshot and show me to confirm; I'll tell you when to send
 
-**Result:** 🔜 Not yet run. Fill in once executed (which tools fired, whether the reply box was
-found and typed into, screenshot before posting).
+**Steps performed:** Composer opened the logged-in `@srush_nlp` profile, read his latest post (on
+on-policy self-distillation, listing OPD / Self-Distillation / RL-via-Self-Distillation arxiv
+links), found the reply box under it, and typed **"Thank you, Professor."** It stopped there with
+the reply composed and the **Reply** button un-clicked, awaiting confirmation.
+
+**Result:** ✅ PASS — read + write on a real logged-in site, using the existing session (no
+re-login), with the human-in-the-loop gate respected (typed but did not post). This is the
+headline proof: Composer 2.5 doing exactly what Claude-in-Chrome does.
 
 ---
 
