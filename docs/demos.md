@@ -44,5 +44,7 @@ repetitive). Hits all three axes hard; very relatable "this actually saved me ti
 
 ## Already done (see testing.md)
 
-- ✅ Twitter: read @srush_nlp's latest post + type a reply (stopped before Post). Read + write on a
-  real logged-in session.
+- ✅ Twitter: read @srush_nlp's latest post + type a reply (stopped before Post).
+- ✅ LinkedIn: read the feed + draft a comment (stopped before posting).
+- ✅ DoorDash: found an item, checked out, placed a real order.
+- ✅ Spotify: played Dua Lipa's "Training Season," switched to video + full screen.

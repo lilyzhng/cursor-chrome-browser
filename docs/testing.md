@@ -13,9 +13,9 @@ reproduce it, and the result. Layered from "no browser needed" up to "real Chrom
 | 4 | Real extension ↔ server handshake | Yes (manual load) | No | ✅ PASS (observed live) |
 | 5 | Full end-to-end in Composer 2.5 (read) | Yes | Yes | ✅ PASS (out of the box) |
 | 6 | Write action on a logged-in site (Twitter reply) | Yes | Yes | ✅ PASS (stopped before Post) |
-| 7 | LinkedIn (read feed / draft comment) | Yes | Yes | 🔜 Planned (not yet run) |
-| 8 | DoorDash food order | Yes | Yes | 🔜 Planned (not yet run) |
-| 9 | Spotify — play Dua Lipa | Yes | Yes | 🔜 Planned (not yet run) |
+| 7 | LinkedIn (read feed / draft comment) | Yes | Yes | ✅ PASS |
+| 8 | DoorDash food order | Yes | Yes | ✅ PASS (order placed) |
+| 9 | Spotify — play Dua Lipa (video, fullscreen) | Yes | Yes | ✅ PASS |
 
 ---
 
@@ -114,7 +114,7 @@ the reply composed and the **Reply** button un-clicked, awaiting confirmation.
 re-login), with the human-in-the-loop gate respected (typed but did not post). This is the
 headline proof: Composer 2.5 doing exactly what Claude-in-Chrome does.
 
-## 7. LinkedIn — read feed / draft a comment (planned)
+## 7. LinkedIn — read feed / draft a comment — 2026-06-14
 
 **Verifies:** browser-use on a site with no usable API. LinkedIn blocks its API and kills scrapers,
 so reading the feed or drafting a comment basically *requires* the logged-in browser. On-brand for a
@@ -127,9 +127,10 @@ career audience.
 > read the latest post from <person>, and draft a thoughtful comment in the reply box. Do NOT post —
 > screenshot and let me confirm.
 
-**Result:** 🔜 Not yet run.
+**Result:** ✅ PASS — drove the logged-in LinkedIn feed and drafted a comment, stopping before
+posting. Confirmed working (Lily, 2026-06-14).
 
-## 8. DoorDash — food order (planned)
+## 8. DoorDash — food order — 2026-06-14
 
 **Verifies:** highest-wow browser-use — no public ordering API, payoff lands in the physical world.
 
@@ -138,12 +139,14 @@ career audience.
 
 **Prompt (model = Composer 2.5):**
 > Using the cursor-chrome-browser tools: open a new tab, navigate to https://www.doordash.com,
-> find <restaurant/dish>, add it to the cart, and go to checkout. STOP before placing the order —
-> screenshot the order summary and let me confirm.
+> find molly tea / Premium Jasmine Milk Tea, add it to the cart, and go to checkout. 
+> place the order, screenshot the order summary 
 
-**Result:** 🔜 Not yet run.
+**Result:** ✅ PASS — Composer found the item on the logged-in DoorDash account, added it to cart,
+checked out, and **placed a real order** (the human-in-the-loop stop was deliberately waived for the
+wow factor). Confirmed working (Lily, 2026-06-14).
 
-## 9. Spotify — play Dua Lipa (planned)
+## 9. Spotify — play Dua Lipa — 2026-06-14
 
 **Verifies:** fast, click-and-play demo with an immediate (audible) effect. Note: weakest on the
 "necessity" axis (Spotify has an API and a native app — see `docs/demos.md`), chosen for speed of
@@ -154,10 +157,12 @@ requires Premium (free accounts may only shuffle).
 
 **Prompt (model = Composer 2.5):**
 > Using the cursor-chrome-browser tools: open a new tab, navigate to
-> https://open.spotify.com/search/Dua%20Lipa, take a screenshot, find Dua Lipa's artist page or top
-> track, and click Play. Screenshot the player bar to confirm music is playing.
+> https://open.spotify.com/, take a screenshot, find Dua Lipa's song, training season
+> click Play. click the button switch to video, click enter full screen
+> Screenshot the page to confirm music video is playing.
 
-**Result:** 🔜 Not yet run.
+**Result:** ✅ PASS — opened Spotify, played Dua Lipa's "Training Season," switched to the video and
+entered full screen. Immediate audible/visible payoff. Confirmed working (Lily, 2026-06-14).
 
 ---
 
