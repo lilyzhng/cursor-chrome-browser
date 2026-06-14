@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node mcp-server.js",
     "smoke": "node smoke-test.mjs",
-    "smoke:transport": "node smoke-transport.mjs"
+    "smoke:transport": "node smoke-transport.mjs",
+    "smoke:live": "node smoke-live.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
