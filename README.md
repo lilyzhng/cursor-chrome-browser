@@ -1,30 +1,23 @@
 # Cursor Chrome Browser
 
-**Let Cursor's Composer drive your real, logged-in Chrome — one product, installed once.**
+**Give your Cursor agent a real browser. Your Chrome, your profile, your logins.**
 
-Everyone assumes only Claude can reach into your browser and operate the sites you're already
-logged into. It's not a model gap: Composer 2.5 is natively multimodal and, in our testing, browses
-*better* than Sonnet 4.6. The Cursor ecosystem just lacked the product wiring. This is that product
-— a Chrome extension plus a small MCP server, talking over a single WebSocket, that gives Composer
-the same "operate my actual browser" power Claude-in-Chrome has. Billed to your Cursor subscription,
-no extra model API key.
+Cursor's agent is great inside the IDE, but the work doesn't stop at code. This connects Composer to
+your actual Chrome, the one with your profile and your sessions already signed in. Ask it to pull
+your Spotify playlists, place a DoorDash order, or read your X feed, and it just works. No re-login,
+no OAuth dance, no auth errors. It's the browser you're already using, driven by the agent.
 
-## How it works
+A Chrome extension plus a small MCP server, talking over a single WebSocket. Billed to your Cursor
+subscription, no extra model API key.
 
-Two components, one product:
+## See it drive
 
-```
-Cursor (Composer)  ⇄ stdio MCP ⇄  server/  ⇄ WebSocket ⇄  extension/  ⇄ CDP ⇄  your Chrome
-```
+One session, three real sites, all signed in. Composer plays music on Spotify, replies to a
+researcher on X, and orders Molly Tea on DoorDash. No re-auth, no captcha wall.
 
-- **`extension/`** — a Manifest V3 Chrome extension that drives tabs via the Chrome DevTools
-  Protocol (click, type, screenshot, scroll, read the accessibility tree, run JS, read
-  console/network). It connects to the server as a WebSocket client.
-- **`server/`** — an MCP server Cursor launches via `~/.cursor/mcp.json`. It exposes 18 browser
-  tools to Composer and runs a localhost WebSocket server the extension connects to.
+![Cursor Chrome Browser demo: Spotify, X, and DoorDash](./docs/media/demo.gif)
 
-No native-messaging host, no `install.sh`, no extension-ID juggling — see [`docs/design.md`](./docs/design.md)
-for the architecture and why it's two hops instead of three.
+Full clip: [demo video on X](https://x.com/lily_gpupoor/status/2066788176564490712).
 
 ## Install
 
@@ -63,7 +56,25 @@ Restart Cursor; `cursor-chrome-browser` should show up under Settings → MCP.
 
 In Composer, ask it to do something on a site you're logged into (e.g. *"open my Linear and
 summarize my latest 3 tickets"*). On first use you pick which tab to hand over; from there Composer
-operates your real, logged-in browser.
+operates your real, logged-in browser. Automation runs in a blue **MCP** tab group and **brings
+that Chrome window to the front** on every tool call so you can watch it work.
+
+## How it works
+
+Two components, one product:
+
+```
+Cursor (Composer)  ⇄ stdio MCP ⇄  server/  ⇄ WebSocket ⇄  extension/  ⇄ CDP ⇄  your Chrome
+```
+
+- **`extension/`** is a Manifest V3 Chrome extension that drives tabs via the Chrome DevTools
+  Protocol (click, type, screenshot, scroll, read the accessibility tree, run JS, read
+  console/network). It connects to the server as a WebSocket client.
+- **`server/`** is an MCP server Cursor launches via `~/.cursor/mcp.json`. It exposes 18 browser
+  tools to Composer and runs a localhost WebSocket server the extension connects to.
+
+No native-messaging host, no `install.sh`, no extension-ID juggling. See [`docs/design.md`](./docs/design.md)
+for the architecture and why it's two hops instead of three.
 
 ## The 18 tools
 
@@ -89,8 +100,3 @@ borrowed from [`noemica-io/open-claude-in-chrome`](https://github.com/noemica-io
 (MIT), a clean-room clone of Claude-in-Chrome's 18 tools. We redesigned the transport (native
 messaging + TCP → a single WebSocket), retargeted it from Claude Code to Cursor, and packaged it as
 one product. See [`docs/design.md`](./docs/design.md).
-
-## Status
-
-v1 — single Cursor session, unauthenticated localhost WebSocket, unpacked extension with
-placeholder icons. See the Risks/phase-2 section of [`docs/design.md`](./docs/design.md).
