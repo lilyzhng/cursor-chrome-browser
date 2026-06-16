@@ -73,8 +73,7 @@ Cursor (Composer)  ⇄ stdio MCP ⇄  server/  ⇄ WebSocket ⇄  extension/  �
 - **`server/`** is an MCP server Cursor launches via `~/.cursor/mcp.json`. It exposes 18 browser
   tools to Composer and runs a localhost WebSocket server the extension connects to.
 
-No native-messaging host, no `install.sh`, no extension-ID juggling. See [`docs/design.md`](./docs/design.md)
-for the architecture and why it's two hops instead of three.
+No native-messaging host, no `install.sh`, no extension-ID juggling, just two hops instead of three.
 
 ## The 18 tools
 
@@ -99,4 +98,4 @@ The CDP tool implementations (the `computer`/`read_page`/`find` logic and tool s
 borrowed from [`noemica-io/open-claude-in-chrome`](https://github.com/noemica-io/open-claude-in-chrome)
 (MIT), a clean-room clone of Claude-in-Chrome's 18 tools. We redesigned the transport (native
 messaging + TCP → a single WebSocket), retargeted it from Claude Code to Cursor, and packaged it as
-one product. See [`docs/design.md`](./docs/design.md).
+one product.

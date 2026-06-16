@@ -5,3 +5,6 @@ node_modules/
 .env.*
 mcp.json.bak-*
 reference/
+docs/demos.md
+docs/design.md
+docs/research.md
